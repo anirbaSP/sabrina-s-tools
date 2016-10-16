@@ -1,0 +1,45 @@
+## setting-up
+git config --global user.name maverickoo
+git config --global user.email billnosdname@gmail.com
+git config credential.helper store
+git push http://example.com/repo.git
+
+## git tag
+git tag <tag_name>
+git push origin <tag_name>
+
+## git flow
+git flow init
+git flow feature start MYFEATURE
+## local merge
+git flow feature finish MYFEATURE
+## to remote
+git flow feature publish MYFEATURE
+
+git flow release start RELEASE
+git flow release publish RELEASE
+git flow release finish RELEASE
+
+## copy a file from another branch
+git checkout <source branch> <file>
+
+## show remote URL
+git remote show origin
+
+## manual branch merge
+git checkout <target>
+git merge <source>
+
+## undo a file-add
+git reset <file>
+
+## fetch origin branch
+git fetch
+git checkout newBranch
+
+## tag ##
+git tag <tag_name>
+git push origin <tag_name>
+
+## checkin files with extension
+git status | grep modified | egrep '\.c$|\.h$|\.mk.in$|\.ac$|\.am$' | awk -F ' ' '{print $3}' | xargs git add

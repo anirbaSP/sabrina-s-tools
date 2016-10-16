@@ -1,0 +1,7 @@
+## look for a process ID with specified name
+ps aux | grep matlab
+pgrep -i matlab
+
+## kill a process
+kill -9 processID
+kill -9 $(pgrep -i matlab)
