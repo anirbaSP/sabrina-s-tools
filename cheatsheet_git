@@ -3,6 +3,7 @@ git config --global user.name maverickoo
 git config --global user.email billnosdname@gmail.com
 git config credential.helper store
 git push http://example.com/repo.git
+git config core.ignorecase false
 
 ## git tag
 git tag <tag_name>
