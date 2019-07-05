@@ -18,7 +18,7 @@ while getopts "h?vc" opt; do
         ;;
     v)  verbose=1
         ;;
-    c)  rm -rf $HOME/anaconda3 $HOME/isx_pipeline_script $HOME/IDPS
+    c)  rm -rf $HOME/anaconda3 $HOME/isx_pipeline_script $HOME/idps
         ;;
     esac
 done
@@ -34,15 +34,16 @@ ssh -T git@github.com
 while [ $? -eq 255 ]; do
    echo "[Script] Please create/add ssh key to the github before continue [https://help.github.com/en/articles/checking-for-existing-ssh-keys]"
    read -p "Press [Enter] key to once this is done..."
-   ssh -T git@github.com
+   ssh -T git@@github.com
 done
 
 
 # Get required paths
-read -p "[Script] Select IDPS installation location [$HOME/IDPS]: " IDPS_PATH
-IDPS_PATH=$HOME/IDPS
+read -p "[Script] Select IDPS installation location [$HOME/Applications/idps]: " IDPS_PATH
+IDPS_PATH=$HOME/Applications/idps
 mkdir -p $IDPS_PATH
-
+d -p "[Script] Provide  Anaconda3 location [$HOME/Applications/anaconda3]: " ANACONDA_DIR
+ANACONDA_DIR=$HOME/Applications/anaconda3
 
 # install IDPS
 cd $IDPS_PATH
@@ -58,7 +59,8 @@ echo "  [Script/idps] Press q if you see --More--"
 echo -e "yn" | ./Inscopix\ Data\ Processing\ 1.2.1.sh
 echo "  [DEBUG][Script/idps] register"
 cd "$(find . -mindepth 1 -maxdepth 1 -type d)/Inscopix Data Processing.linux/Contents/API/Python/"
-echo `pwd` > $ANACONDA_DIR/envs/isx_analysis/lib/python3.6/site-packages/inscopix.pth
+echo `pwd` > $ANACONDA_DIR/envs/isxenv/lib/python3.6/site-packages/inscopix.pth
+echo `pwd` > $ANACONDA_DIR/envs/isx_analysis_env/lib/python3.6/site-packages/inscopix.pth
 
 # 3. VERIFICATION
 echo -e "\n"
