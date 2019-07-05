@@ -18,7 +18,7 @@ while getopts "h?vc" opt; do
         ;;
     v)  verbose=1
         ;;
-    c)  rm -rf $HOME/anaconda3 $HOME/isx_pipeline_script $HOME/idps
+    c)  rm -rf $HOME/Applications/idps
         ;;
     esac
 done
@@ -39,11 +39,10 @@ done
 
 
 # Get required paths
-read -p "[Script] Select IDPS installation location [$HOME/Applications/idps]: " IDPS_PATH
-IDPS_PATH=$HOME/Applications/idps
+read -e  -p "[Script] Select IDPS installation location: " -i "$HOME/Applications/idps" IDPS_PATH
+# IDPS_PATH=${IDPS_PATH:-$HOME/Applications/idps}
 mkdir -p $IDPS_PATH
-d -p "[Script] Provide  Anaconda3 location [$HOME/Applications/anaconda3]: " ANACONDA_DIR
-ANACONDA_DIR=$HOME/Applications/anaconda3
+read -e -p "[Script] Provide Anaconda3 location: " -i "$HOME/Applications/anaconda3" ANACONDA_DIR
 
 # install IDPS
 cd $IDPS_PATH
