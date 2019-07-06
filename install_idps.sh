@@ -49,7 +49,7 @@ cd $IDPS_PATH
 echo "[Script] Installing idps..."
 # use guest login (shouldn't)
 echo "  [DEBUG][Script/idps] download"
-curl -v --basic --request GET http://teamcity.inscopix.com:8111/httpAuth/repository/downloadAll/Mosaic2_NightlyLinux/latest.lastSuccessful?guest=1 --output idps.zip
+wget http://teamcity.inscopix.com:8111/httpAuth/repository/downloadAll/Mosaic2_NightlyLinux/latest.lastSuccessful?guest=1 -O ./idps.zip
 echo "  [DEBUG][Script/idps] unzip + rm + chmod"
 unzip idps.zip
 rm idps.zip
@@ -57,14 +57,26 @@ chmod +x *.sh
 echo "  [Script/idps] Press q if you see --More--"
 echo -e "yn" | ./Inscopix\ Data\ Processing\ 1.2.1.sh
 echo "  [DEBUG][Script/idps] register"
-cd "$(find . -mindepth 1 -maxdepth 1 -type d)/Inscopix Data Processing.linux/Contents/API/Python/"
-echo `pwd` > $ANACONDA_DIR/envs/isxenv/lib/python3.6/site-packages/inscopix.pth
-echo `pwd` > $ANACONDA_DIR/envs/isx_analysis_env/lib/python3.6/site-packages/inscopix.pth
+# create isxenv conda environment
+API_PATH=$(find $PWD -iname "Inscopix Data Processing.linux")/Contents/API/Python/
+echo "  [DEBUG][Script/idps] create isxenv environment"
+ISXENV_PATH=$ANACONDA_DIR/envs/isxenv
+if [ -d $ISXENV_PATH ] ; then
+	rm -r $ISXENV_PATH
+fi
+conda env create -f "$API_PATH/isx/environment.yml" -n isxenv
+echo $API_PATH > $ANACONDA_DIR/envs/isxenv/lib/python3.6/site-packages/inscopix.pth
+
+ISX_ANALYSIS_ENV_PATH=$ANACONDA_DIR/envs/isx_analysis_env
+if [ -f $ISX_ANALYSIS_ENV_PATH ] ; then
+	echo $API_PATH > $ANACONDA_DIR/envs/isx_analysis_env/lib/python3.6/site-packages/inscopix.pth
+fi
 
 # 3. VERIFICATION
 echo -e "\n"
 echo "[Script] VERIFICATION"
-conda -V
+echo "  [DEBUG][Script/idps] activate isxenv"
+source activate $ISXENV_PATH  
 python -c "import isx"
 if [ $? -eq 1 ]; then
   echo "[Script] IDPS not imported"
