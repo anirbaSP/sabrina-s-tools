@@ -62,7 +62,7 @@ API_PATH=$(find $PWD -iname "Inscopix Data Processing.linux")/Contents/API/Pytho
 echo "  [DEBUG][Script/idps] create isxenv environment"
 ISXENV_PATH=$ANACONDA_DIR/envs/isxenv
 if [ -d $ISXENV_PATH ] ; then
-	rm -r $ISXENV_PATH
+	rm -rf $ISXENV_PATH
 fi
 conda env create -f "$API_PATH/isx/environment.yml" -n isxenv
 echo $API_PATH > $ANACONDA_DIR/envs/isxenv/lib/python3.6/site-packages/inscopix.pth
