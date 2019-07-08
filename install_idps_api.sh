@@ -1,4 +1,7 @@
 #!/bin/sh
+# -----------------------------------------------------------------------------
+# [Author] Pei Sabrina Xu (2019), adapted from Albert Yang
+# ----------------------------------------------------------------------------
 
 # A POSIX variable
 OPTIND=1         # Reset in case getopts has been used previously in the shell.
@@ -64,20 +67,27 @@ echo "[Script] Anaconda3 installed"
 
 # install IDPS
 cd $IDPS_PATH
-echo "[Script] Installing idps..."
-# use guest login (shouldn't)
-echo "  [DEBUG][Script/idps] download"
-wget http://teamcity.inscopix.com:8111/httpAuth/repository/downloadAll/Mosaic2_NightlyLinux/latest.lastSuccessful?guest=1 -O ./idps.zip
-echo "  [DEBUG][Script/idps] unzip + rm + chmod"
-unzip idps.zip
-rm idps.zip
-chmod +x *.sh
-echo "  [Script/idps] Press q if you see --More--"
-echo -e "yn" | ./Inscopix\ Data\ Processing\ 1.2.1.sh
-echo "  [DEBUG][Script/idps] register"
+IDPS_DIR=$(find $PWD -iname "Inscopix Data Processing.linux")
+if [ -d "$IDPS_DIR" ]; then
+   echo "[Script/idps] already exists, skip"
+   # TODO: add overwrite
+else
+   echo "[Script] Installing idps..."
+   # use guest login (shouldn't)
+   echo "  [DEBUG][Script/idps] download"
+   wget http://teamcity.inscopix.com:8111/httpAuth/repository/downloadAll/Mosaic2_NightlyLinux/latest.lastSuccessful?guest=1 -O ./idps.zip
+   echo "  [DEBUG][Script/idps] unzip + rm + chmod"
+   unzip idps.zip
+   rm idps.zip
+   chmod +x *.sh
+   echo "  [Script/idps] Press q if you see --More--"
+   echo -e "yn" | ./Inscopix\ Data\ Processing\ 1.2.1.sh
+   echo "  [DEBUG][Script/idps] register"
+fi
+IDPS_DIR=$(find $PWD -iname "Inscopix Data Processing.linux")
 # create isxenv conda environment
-API_PATH=$(find $PWD -iname "Inscopix Data Processing.linux")/Contents/API/Python/
-echo "  [DEBUG][Script/idps] create isxenv environment"
+API_PATH=$IDPS_DIR/Contents/API/Python/
+echo "  [Script/idps] create isxenv environment"
 ISXENV_PATH=$ANACONDA_DIR/envs/isxenv
 conda env create -f "$API_PATH/isx/environment.yml" -n isxenv
 echo $API_PATH > $ANACONDA_DIR/envs/isxenv/lib/python3.6/site-packages/inscopix.pth
@@ -92,7 +102,7 @@ if [ $? -eq 1 ]; then
 else
   echo "[Script] conda installation success"
 fi
-echo "  [DEBUG][Script/idps] activate isxenv"
+echo "  [Script/idps] activate isxenv"
 source activate $ISXENV_PATH  
 python -c "import isx"
 if [ $? -eq 1 ]; then

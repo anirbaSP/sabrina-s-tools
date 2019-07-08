@@ -1,4 +1,7 @@
 #!/bin/sh
+# -----------------------------------------------------------------------------
+# [Author] Pei Sabrina Xu (2019), adapted from Albert Yang
+# ----------------------------------------------------------------------------
 
 # A POSIX variable
 OPTIND=1         # Reset in case getopts has been used previously in the shell.
@@ -116,19 +119,26 @@ fi
 
 # isx
 cd $IDPS_PATH
-# todo: if idps is already installed
-echo "[Script] Installing idps..."
-# use guest login (shouldn't)
-echo "  [DEBUG][Script/idps] download"
-wget http://teamcity.inscopix.com:8111/httpAuth/repository/downloadAll/Mosaic2_NightlyLinux/latest.lastSuccessful?guest=1 -O ./idps.zip
-echo "  [DEBUG][Script/idps] unzip + rm + chmod"
-unzip idps.zip
-rm idps.zip
-chmod +x *.sh
-echo "  [Script/idps] Press q if you see --More--"
-echo -e "yn" | ./Inscopix\ Data\ Processing\ 1.2.1.sh
-echo "  [DEBUG][Script/idps] register"
-ISX_API_PATH=$(find $PWD -iname "Inscopix Data Processing.linux")/Contents/API/Python/
+echo "[Script] IDPS..."
+IDPS_DIR=$(find $PWD -iname "Inscopix Data Processing.linux")
+if [ -d "$IDPS_DIR" ]; then
+   echo "  [Script/idps] already exists, skip"
+   # TODO: add overwrite
+else
+   echo "  [Script/idps] Installing idps..."
+   # use guest login (shouldn't)
+   echo "  [DEBUG][Script/idps] download"
+   wget http://teamcity.inscopix.com:8111/httpAuth/repository/downloadAll/Mosaic2_NightlyLinux/latest.lastSuccessful?guest=1 -O ./idps.zip
+   echo "  [DEBUG][Script/idps] unzip + rm + chmod"
+   unzip idps.zip
+   rm idps.zip
+   chmod +x *.sh
+   echo "  [Script/idps] Press q if you see --More--"
+   echo -e "yn" | ./Inscopix\ Data\ Processing\ 1.2.1.sh
+   echo "  [DEBUG][Script/idps] register"
+fi
+IDPS_DIR=$(find $PWD -iname "Inscopix Data Processing.linux")
+ISX_API_PATH=$IDPS_DIR/Contents/API/Python/
 echo $ISX_API_PATH > $ANACONDA_DIR/envs/isxanaenv/lib/python3.6/site-packages/inscopix.pth
 
 
@@ -141,7 +151,7 @@ if [ $? -eq 1 ]; then
 else
   echo "[Script] conda installation success"
 fi
-echo "  [DEBUG][Script/idps] activate isxanaenv"
+echo "  [DEBUG][Script/isx-analysis] activate isxanaenv"
 python -c "import isx"
 if [ $? -eq 1 ]; then
   echo "[Script] IDPS not imported"
