@@ -67,9 +67,9 @@ fi
 conda env create -f "$API_PATH/isx/environment.yml" -n isxenv
 echo $API_PATH > $ANACONDA_DIR/envs/isxenv/lib/python3.6/site-packages/inscopix.pth
 
-ISX_ANALYSIS_ENV_PATH=$ANACONDA_DIR/envs/isx_analysis_env
-if [ -f $ISX_ANALYSIS_ENV_PATH ] ; then
-	echo $API_PATH > $ANACONDA_DIR/envs/isx_analysis_env/lib/python3.6/site-packages/inscopix.pth
+ISXANAENV_PATH=$ANACONDA_DIR/envs/isxanaenv
+if [ -f $ISXANAENV_PATH ] ; then
+	echo $API_PATH > $ANACONDA_DIR/envs/isxanaenv/lib/python3.6/site-packages/inscopix.pth
 fi
 
 # 3. VERIFICATION

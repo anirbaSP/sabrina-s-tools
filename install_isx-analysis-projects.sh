@@ -18,7 +18,7 @@ while getopts "h?vc" opt; do
         ;;
     v)  verbose=1
         ;;
-    c)  rm -rf $HOME/Applications/anaconda3 $HOME/isx_pipeline_script $HOME/Applications/idps
+    c)  rm -rf $HOME/Applications/anaconda3 $HOME/Applications/idps
         ;;
     esac
 done
@@ -34,24 +34,18 @@ ssh -T git@github.com
 while [ $? -eq 255 ]; do
    echo "[Script] Please create/add ssh key to the github before continue [https://help.github.com/en/articles/checking-for-existing-ssh-keys]"
    read -p "Press [Enter] key to once this is done..."
-   ssh -T git@github.com
+   ssh -T git@@github.com
 done
 
 
 # Get required paths
-read -p "[Script] Select IDPS installation location [$HOME/Applications/idps]: " IDPS_PATH
-IDPS_PATH=$HOME/Applications/idps
+read -e -p "[Script] Select Anaconda3 installation location: " -i "$HOME/Applications/anaconda3" ANACONDA_DIR
+read -e -p "[Script] Select IDPS installation location: " -i "$HOME/Applications/idps" IDPS_PATH
 mkdir -p $IDPS_PATH
-read -p "[Script] Select Anaconda3 installation location [$HOME/Applications/anaconda3]: " ANACONDA_DIR
-ANACONDA_DIR=$HOME/Applications/anaconda3
-# $ANACONDA_DIR will be created by anaconda script
-read -p "[Script] Select pipeline script working location [$HOME/isx_pipeline_script]: " WORK_DIR
-WORK_DIR=$HOME/isx_pipeline_script
+read -e -p "[Script] Select script working location: " -i "$HOME/git" WORK_DIR
 mkdir -p $WORK_DIR
 
-
 # 1. INSTALL ANACONDA3 (SILENT)
-cd $WORK_DIR
 echo -e "\n"
 echo "[Script] Checking Anaconda3 installation..."
 which conda
@@ -70,10 +64,11 @@ fi
 echo "[Script] Anaconda3 installed"
 
 
-# 2. ADD PACKAGES (required by python script)
+# 2. ADD PACKAGES 
+
 echo "[Script] Checking github repositories..."
 
-# isx_analysis (conda environment)
+# isx_analysis
 cd $WORK_DIR
 echo "[Script] isx-analysis..."
 if [ -d "isx-analysis" ]; then
@@ -83,10 +78,10 @@ else
   echo "  [Script/isx_analysis] clone"
   git clone git@github.com:inscopix/isx-analysis.git
   cd isx-analysis
-  echo "  [DEBUG][Script/isx-analysis] create_env"
-  conda env create -f environment.yml -n isx_analysis
-  echo "  [DEBUG][Script/isx_analysis] activate"
-  conda activate isx_analysis
+  echo "  [DEBUG][Script/isx-analysis] create isxanaenv"
+  conda env create -f environment.yml -n isxanaenv
+  echo "  [DEBUG][Script/isx_analysis] activate isxanaenv"
+  conda activate isxanaenv
   echo "  [DEBUG][Script/isx_analysis] install"
   python setup.py install
 fi
@@ -107,7 +102,7 @@ else
   echo "[Script] isx-rest-client...done"
 fi
 
-# isx_rest_client
+# isx_analysis_project
 cd $WORK_DIR
 echo "[Script] isx-analysis-projects..."
 if [ -d "isx-analysis-projects" ]; then
@@ -121,10 +116,11 @@ fi
 
 # isx
 cd $IDPS_PATH
+# todo: if idps is already installed
 echo "[Script] Installing idps..."
 # use guest login (shouldn't)
 echo "  [DEBUG][Script/idps] download"
-curl -v --basic --request GET http://teamcity.inscopix.com:8111/httpAuth/repository/downloadAll/Mosaic2_NightlyLinux/latest.lastSuccessful?guest=1 --output idps.zip
+wget http://teamcity.inscopix.com:8111/httpAuth/repository/downloadAll/Mosaic2_NightlyLinux/latest.lastSuccessful?guest=1 -O ./idps.zip
 echo "  [DEBUG][Script/idps] unzip + rm + chmod"
 unzip idps.zip
 rm idps.zip
@@ -132,8 +128,9 @@ chmod +x *.sh
 echo "  [Script/idps] Press q if you see --More--"
 echo -e "yn" | ./Inscopix\ Data\ Processing\ 1.2.1.sh
 echo "  [DEBUG][Script/idps] register"
-cd "$(find . -mindepth 1 -maxdepth 1 -type d)/Inscopix Data Processing.linux/Contents/API/Python/"
-echo `pwd` > $ANACONDA_DIR/envs/isx_analysis/lib/python3.6/site-packages/inscopix.pth
+ISX_API_PATH=$(find $PWD -iname "Inscopix Data Processing.linux")/Contents/API/Python/
+echo $ISX_API_PATH > $ANACONDA_DIR/envs/isxanaenv/lib/python3.6/site-packages/inscopix.pth
+
 
 # 3. VERIFICATION
 echo -e "\n"
@@ -144,17 +141,12 @@ if [ $? -eq 1 ]; then
 else
   echo "[Script] conda installation success"
 fi
+echo "  [DEBUG][Script/idps] activate isxanaenv"
 python -c "import isx"
 if [ $? -eq 1 ]; then
   echo "[Script] IDPS not imported"
 else
   echo "[Script] idps success"
-fi
-python -c "import isx_analysis"
-if [ $? -eq 1 ]; then
-  echo "[Script] isx_analysis not installed"
-else
-  echo "[Script] isx_analysis success"
 fi
 python -c "import isx_rest_client"
 if [ $? -eq 1 ]; then
@@ -162,9 +154,19 @@ if [ $? -eq 1 ]; then
  else
   echo "[Script] isx_rest_client success"
 fi
+python -c "import isx_analysis"
+if [ $? -eq 1 ]; then
+  echo "[Script] isx_analysis not installed"
+else
+  echo "[Script] isx_analysis success"
+fi
+
 
 echo -e "\n"
 echo "Anaconda is installed at [$ANACONDA_DIR]"
 echo "IDPS is installed at [$IDPS_PATH]"
-echo "The script for pipeline is at [$WORK_DIR/isx-analysis-projects]"
+echo "isx-rest-client git code is at [$WORK_DIR/isx-rest-client]"
+echo "isx-analysis git code is at [$WORK_DIR/isx-analysis]"
+echo "isx-analysis-project git code is at [$WORK_DIR/isx-analysis-project]"
+
 read -p "Press [Enter] key to quit..."
