@@ -21,7 +21,7 @@ while getopts "h?vc" opt; do
         ;;
     v)  verbose=1
         ;;
-    c)  rm -rf $HOME/Applications/anaconda3 $HOME/Applications/idps
+    c)  rm -rf $HOME/Applications/anaconda3 $HOME/Applications/idps $HOME/git/isx-analysis $HOME/git/isx-rest-client $HOME/git/isx-analysis-projects
         ;;
     esac
 done
@@ -39,7 +39,6 @@ while [ $? -eq 255 ]; do
    read -p "Press [Enter] key to once this is done..."
    ssh -T git@@github.com
 done
-
 
 # Get required paths
 read -e -p "[Script] Select Anaconda3 installation location: " -i "$HOME/Applications/anaconda3" ANACONDA_DIR
@@ -84,11 +83,13 @@ else
   echo "  [DEBUG][Script/isx-analysis] create isxanaenv"
   conda env create -f environment.yml -n isxanaenv
   echo "  [DEBUG][Script/isx_analysis] activate isxanaenv"
-  conda activate isxanaenv
+  source activate isxanaenv
   echo "  [DEBUG][Script/isx_analysis] install"
   python setup.py install
+  conda deactivate
 fi
 echo "[Script] isx-analysis...done"
+
 
 # isx_rest_client
 cd $WORK_DIR
@@ -101,7 +102,9 @@ else
   git clone git@github.com:inscopix/isx-rest-client.git
   cd isx-rest-client/python
   echo "  [DEBUG][Script/isx-rest] install"
+  source activate isxanaenv
   python setup.py install
+  conda deactivate
   echo "[Script] isx-rest-client...done"
 fi
 
@@ -152,25 +155,28 @@ else
   echo "[Script] conda installation success"
 fi
 echo "  [DEBUG][Script/isx-analysis] activate isxanaenv"
+source activate isxanaenv
+
 python -c "import isx"
 if [ $? -eq 1 ]; then
   echo "[Script] IDPS not imported"
 else
   echo "[Script] idps success"
 fi
+
 python -c "import isx_rest_client"
 if [ $? -eq 1 ]; then
   echo "[Script] isx_rest_client not installed"
  else
   echo "[Script] isx_rest_client success"
 fi
+
 python -c "import isx_analysis"
 if [ $? -eq 1 ]; then
   echo "[Script] isx_analysis not installed"
 else
   echo "[Script] isx_analysis success"
 fi
-
 
 echo -e "\n"
 echo "Anaconda is installed at [$ANACONDA_DIR]"

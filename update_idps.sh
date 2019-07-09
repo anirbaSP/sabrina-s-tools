@@ -100,6 +100,7 @@ if [ $? -eq 1 ]; then
 else
    echo "  [Script] idps success"
 fi
+conda deactivate
 
 echo -e "\n"
 echo "IDPS is installed at [$IDPS_PATH]"

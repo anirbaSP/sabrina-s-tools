@@ -88,7 +88,6 @@ IDPS_DIR=$(find $PWD -iname "Inscopix Data Processing.linux")
 # create isxenv conda environment
 API_PATH=$IDPS_DIR/Contents/API/Python/
 echo "  [Script/idps] create isxenv environment"
-ISXENV_PATH=$ANACONDA_DIR/envs/isxenv
 conda env create -f "$API_PATH/isx/environment.yml" -n isxenv
 echo $API_PATH > $ANACONDA_DIR/envs/isxenv/lib/python3.6/site-packages/inscopix.pth
 
@@ -103,13 +102,14 @@ else
   echo "[Script] conda installation success"
 fi
 echo "  [Script/idps] activate isxenv"
-source activate $ISXENV_PATH  
+source activate isxenv  
 python -c "import isx"
 if [ $? -eq 1 ]; then
   echo "[Script] IDPS not imported"
 else
   echo "[Script] idps success"
 fi
+conda deactivate
 
 echo -e "\n"
 echo "Anaconda is installed at [$ANACONDA_DIR]"
