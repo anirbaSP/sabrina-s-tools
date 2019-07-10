@@ -1,0 +1,10 @@
+[user]
+	name = Pei Sabrina Xu 
+	email = psxu@inscopix.com
+	username = anirbaSP 
+[credential]
+        helper = store
+[push]
+	default = simple
+[core]
+	excludsfile = ~/.gitignore
