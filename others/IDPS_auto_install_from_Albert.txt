@@ -1,0 +1,220 @@
+@ECHO off
+SETLOCAL ENABLEDELAYEDEXPANSION
+ECHO IDPS auto installation application
+ECHO Requirements before continue:
+ECHO    1. Anaconda3 ("https://www.anaconda.com/distribution/#download-section")
+ECHO    2. Latest IDPS ("https://support.inscopix.com/support/products/data-processing-software/downloads-1")
+ECHO    3. Visual Studio C++ Tools ("https://go.microsoft.com/fwlink/?LinkId=532606&clcid=0x409")
+ECHO    4. Git bash ("https://git-scm.com/download/win")
+PAUSE
+REM Global variables
+ECHO:
+SET idps_path=C:\Program Files\Inscopix\Data Processing
+SET anaconda_path=%UserProfile%\Anaconda3
+SET environment_file_path=%UserProfile%\Downloads
+REM Check and add required commands
+CALL :check_command "0" "WMIC OS" "%SYSTEMROOT%\System32\Wbem"
+CALL :check_command "0" "FINDSTR" "%SYSTEMROOT%\System32"
+CALL :check_command "0" "CHOICE /T 0 /D Y" "%SYSTEMROOT%\System32"
+GOTO start
+
+:caught_error
+	ECHO [INSCOPIX] caught_error >> %logfile_path%
+	ECHO:
+	ECHO An error has occured, please contact support@inscopix.com and keep your log file at %logfile_path%
+	GOTO quit_program
+
+:start
+	REM set to different start point for debugging purpose
+	GOTO :log_file
+
+:log_file
+	ECHO:
+	FOR /F "delims=\." %%A IN ('WMIC OS GET LocalDateTime ^| FINDSTR \.') DO SET B=%%A
+	SET logfile_path=%UserProfile%\Downloads\inscopix_%B%.log
+	ECHO Log will be written to %logfile_path%
+	ECHO: 2>%logfile_path%
+	ECHO [INSCOPIX] path variables: %PATH% >> %logfile_path%
+	ECHO [INSCOPIX] windows version: >> %logfile_path%
+	VER >> %logfile_path%
+	GOTO check_pre_install
+
+:check_command
+	REM try running the command and if failed add potential location to path
+	ECHO Checking required commands...
+	ECHO    %~2
+	%~2 > NUL 2>&1
+	REM Need to be written into one line as PATH contains parentheses (https://support.microsoft.com/en-us/help/2524009)
+	IF ERRORLEVEL 9009 IF %1 EQU "0" SET "PATH=%PATH%;%~3" && CALL :check_command "1" %2 %3 ELSE ECHO %2 not found, trying to proceed without it.
+	exit /b 0
+
+:check_pre_install
+	REM Visual Studio
+	ECHO:
+	ECHO Checking Visual Studio...
+	ECHO [INSCOPIX] check_pre_install: VS >> %logfile_path%
+	cl >> %logfile_path% 2>&1
+	IF %ERRORLEVEL% NEQ 0 (
+		ECHO Visual Studio is not installed correctly, please check if its path is being added
+		ECHO [INSCOPIX] check_pre_install: VS [FAILED] >> %logfile_path%
+		GOTO caught_error
+	)
+	ECHO    PASS
+	ECHO [INSCOPIX] check_pre_install: VS [PASS] >> %logfile_path%
+	REM IDPS (may need more check other than just the directory)
+	ECHO Checking IDPS...
+	ECHO [INSCOPIX] check_pre_install: IDPS @ %idps_path% >> %logfile_path%
+	IF NOT EXIST "%idps_path%" (
+		ECHO IDPS is not installed correctly
+		ECHO [INSCOPIX] check_pre_install: IDPS [FAILED] >> %logfile_path%
+		GOTO caught_error
+	)
+	ECHO [INSCOPIX] check_pre_install: IDPS [PASS] >> %logfile_path%
+	ECHO    IDPS is found at %idps_path%
+	GOTO test_anaconda
+
+:test_anaconda
+	ECHO Checking Anaconda3...
+	ECHO [INSCOPIX] test_anaconda >> %logfile_path%
+	IF NOT EXIST "%anaconda_path%" (
+		ECHO Cannot find Anaconda3 at %anaconda_path%
+		GOTO find_anaconda
+	)
+	ECHO    Anaconda3 is found at %anaconda_path%
+	GOTO remove_old
+
+:find_anaconda
+	ECHO [INSCOPIX] find_anaconda >> %logfile_path%
+	CHOICE /M "Do you know where Anaconda is installed"
+	IF !ERRORLEVEL! EQU 1 (
+		SET /P anaconda_path="Please enter the full path(e.g: C:\Users\Bob\Anaconda3):"
+		GOTO test_anaconda
+	)
+	IF !ERRORLEVEL! EQU 2 (
+		REM TODO: Add support on other drives
+		ECHO Searching for Anaconda in C drive, this might take a few minutes...
+		cd C:\
+		FOR /f "delims=" %%F in ('dir /b "Uninstall-Anaconda3.exe" /s') do SET anaconda_temp=%%~dpF
+		IF !ERRORLEVEL! NEQ 0 (
+			ECHO Cannot file Anaconda3 in C drive, please try to find Anaconda from the windows search and re-run this program
+			GOTO quit_program
+		)
+		SET anaconda_path=!anaconda_temp!
+		ECHO     Anaconda3 path is found at !anaconda_temp!
+		GOTO remove_old
+	)
+
+:remove_old
+	ECHO [INSCOPIX] remove_old >> %logfile_path%
+	IF NOT EXIST %anaconda_path%\envs\isxenv (
+		GOTO setup
+	)
+	ECHO:
+	ECHO A previous isxenv is found at %anaconda_path%\envs\isxenv.
+	CHOICE /M "Do you want remove the existing isxenv from Anaconda and start over"
+	IF %ERRORLEVEL% EQU 1 (
+		ECHO    Deleting your %anaconda_path%\envs\isxenv...
+		RMDIR /S /Q %anaconda_path%\envs\isxenv
+		IF EXIST %anaconda_path%\envs\isxenv (
+			ECHO [INSCOPIX] remove_old: failed to remove old isxenv >> %logfile_path%
+			ECHO    Cannot remove isxenv at %anaconda_path%\envs\isxenv, please try  manually removing it
+			ECHO    Continue after you have deleted it
+			PAUSE
+			GOTO remove_old
+		)
+		ECHO %anaconda_path%\envs\isxenv has been deleted
+		GOTO setup
+	)
+	IF %ERRORLEVEL% EQU 2 GOTO verify_isxenv
+
+:setup
+	ECHO [INSCOPIX] setup >> %logfile_path%
+	ECHO:
+	ECHO Setting up your IDPS environment, this might take around 1 hour...
+	ECHO    You can view the progress by opening %logfile_path%
+	rem ECHO    If you are asked to input username/password for "github.com"
+	ECHO [INSCOPIX] setup: Switch to anaconda prompt >> %logfile_path%
+	CALL %anaconda_path%\Scripts\activate.bat
+	REM copy out as isx directory doesn't allow file creation
+	ECHO [INSCOPIX] setup: Copy environment.yml out >> %logfile_path% 2>&1
+	CD %environment_file_path%
+	COPY "%idps_path%\isx\environment.yml" "%environment_file_path%\environment.yml" /Y >> %logfile_path% 2>&1
+	ECHO [INSCOPIX] setup: Create conda environment >> %logfile_path% 2>&1
+	CALL conda env create -f environment.yml -n isxenv >> %logfile_path% 2>&1
+	ECHO [INSCOPIX] setup: Create inscopix.pth >> %logfile_path%
+	ECHO %idps_path% > %anaconda_path%\envs\isxenv\Lib\site-packages\inscopix.pth
+	ECHO [INSCOPIX] setup: DONE >> %logfile_path%
+	ECHO Your isxenv setup has finished
+	GOTO verify_isxenv
+
+:install_git_pip
+	ECHO [INSCOPIX] install_git_pip: Activate isxenv >> %logfile_path%
+	CALL conda activate isxenv >> %logfile_path% 2>&1
+	ECHO [INSCOPIX] install_git_pip: Install git and pip >> %logfile_path%
+	CALL conda install -y git pip >> %logfile_path% 2>&1
+	GOTO :EOF
+
+:find_package
+	ECHO:
+	ECHO Checking %~1...
+	ECHO [INSCOPIX] find_package: %~1 >> %logfile_path%
+	CALL conda list | findstr %~1 >> %logfile_path% 2>&1
+	IF %ERRORLEVEL% NEQ 0 (
+		ECHO [INSCOPIX] find_package: %~1 is missing >> %logfile_path%
+		exit /b 1
+	)
+	ECHO [INSCOPIX] find_package: %~1 is found >> %logfile_path%
+	exit /b 0
+
+:verify_packages
+	ECHO [INSCOPIX] verify_packages: %~1 >> %logfile_path%
+	CALL :find_package %~1
+	IF !ERRORLEVEL! NEQ 0 (
+		CHOICE /M "%~1 is not installed correctly, do you want to try again"
+		IF !ERRORLEVEL! EQU 1 (
+			ECHO 	Preparing the installation...
+			CALL :install_git_pip
+			ECHO 	Installing %~1
+			ECHO [INSCOPIX] verify_packages: Installing %~1 >> %logfile_path%
+			if %~1 EQU isx (
+				CALL pip install git+https://github.com/inscopix/isx-cnmfe-wrapper@v1.1 >> %logfile_path% 2>&1
+			)
+			if %~1 EQU caiman (
+				CALL pip install git+https://github.com/flatironinstitute/CaImAn.git@7dc5b42ab06c6a6b86ff1520dfc5b2334f335a78 >> %logfile_path% 2>&1
+			)
+			GOTO verify_packages
+		)
+		IF !ERRORLEVEL! EQU 2 GOTO caught_error
+	)
+	ECHO [INSCOPIX] verify_packages: %~1 is verified >> %logfile_path%
+	GOTO :EOF
+
+:verify_isxenv
+	CALL %anaconda_path%\Scripts\activate.bat
+	ECHO [INSCOPIX] verify_isxenv >> %logfile_path%
+	ECHO:
+	ECHO Verifying the installation...
+	REM TODO: Add more checks
+	ECHO [INSCOPIX] verify_isxenv: activate isxenv >> %logfile_path%
+	CALL conda activate isxenv >> %logfile_path% 2>&1
+	ECHO [INSCOPIX] verify_isxenv: conda packages list >> %logfile_path%
+	CALL conda list >> %logfile_path% 2>&1
+	CALL :verify_packages caiman
+	CALL :verify_packages isx
+	ECHO [INSCOPIX] verify_isxenv: packages verified >> %logfile_path%
+	ECHO The installation has been verified, enjoy your isxenv
+	CALL :delete_log_file
+	GOTO quit_program
+
+:delete_log_file
+	ECHO:
+	CHOICE /M "Do you want to delete the log file at %logfile_path%"
+	IF %ERRORLEVEL% EQU 1 (
+		DEL /Q %logfile_path%
+	)
+
+:quit_program
+	ECHO:
+	ECHO Press any key to quit the program
+	PAUSE >nul
+	exit
