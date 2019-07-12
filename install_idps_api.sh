@@ -45,6 +45,8 @@ done
 read -e -p "[Script] Select Anaconda3 installation location: " -i "$HOME/Applications/anaconda3" ANACONDA_DIR
 read -e -p "[Script] Select IDPS installation location: " -i "$HOME/Applications/idps" IDPS_PATH
 mkdir -p $IDPS_PATH
+read -e -p "[Script] Select script working location: " -i "$HOME/git" WORK_DIR
+mkdir -p $WORK_DIR
 
 # 1. INSTALL ANACONDA3 (SILENT)
 echo -e "\n"
@@ -90,6 +92,30 @@ API_PATH=$IDPS_DIR/Contents/API/Python/
 echo "  [Script/idps] create isxenv environment"
 conda env create -f "$API_PATH/isx/environment.yml" -n isxenv
 echo $API_PATH > $ANACONDA_DIR/envs/isxenv/lib/python3.6/site-packages/inscopix.pth
+
+
+# download packages for CNMF_E
+cd $WORK_DIR
+echo "[Script] CNMF_E matlab..."
+if [ -d "CNMF_E" ]; then
+  echo "  [Script/CNMF_E] already exists, skip"
+  # TODO: add overwrite
+else
+  echo "  [Script/CNMF_E] clone"
+  git clone --recurse-submodules https://github.com/zhoupc/CNMF_E.git 
+fi
+echo "[Script] CNMF_E...done"
+
+echo "[Script] isx-cnmfe-wrapper..."
+if [ -d "isx-cnmfe-wrapper" ]; then
+  echo "  [Script/isx-cnmfe-wrapper already exists, skip"
+  # TODO: add overwrite
+else
+  echo "  [Script/isx-cnmfe-wrapper] clone"
+  git clone --recurse-submodules https://github.com/inscopix/isx-cnmfe-wrapper.git 
+fi
+echo "[Script] isx-cnmfe-wrapper...done"
+
 
 
 # 3. VERIFICATION
