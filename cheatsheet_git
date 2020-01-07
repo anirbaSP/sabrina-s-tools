@@ -5,6 +5,7 @@ git config credential.helper store
 git push http://example.com/repo.git
 git config core.ignorecase false
 
+
 ## git tag
 git tag <tag_name>
 git push origin <tag_name>
@@ -30,6 +31,13 @@ git remote show origin
 ## manual branch merge
 git checkout <target>
 git merge <source>
+
+## git remove a local branch
+git delete -d branchName
+git push origin --delete branchName
+
+## update the local list of remote branches
+git remote update origin --prune
 
 ## undo a file-add
 git reset <file>
