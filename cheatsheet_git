@@ -5,6 +5,11 @@ git config credential.helper store
 git push http://example.com/repo.git
 git config core.ignorecase false
 
+## git stash
+git stash push
+git stash list
+git stash pop
+
 ## git tag
 git tag <tag_name>
 git push origin <tag_name>
@@ -44,3 +49,27 @@ git push origin <tag_name>
 
 ## checkin files with extension
 git status | grep modified | egrep '\.c$|\.h$|\.mk.in$|\.ac$|\.am$' | awk -F ' ' '{print $3}' | xargs git add
+
+## clone a project and push it into a new project
+# We assume the organization repo as cs72100-omscs and the project repo as project1-intro.
+
+# Ceate a private repo named the same under your personal account, e.g. project1-intro. You should create the repo as raw, instead of including an initial README.md.
+
+# Get the project repo. You will be asked to enter your password. You can also cache the credential (password) to ease some pain.
+git clone https://<gtid>@github.gatech.edu/cs72100-omscs/project1-intro.git
+git config --global credential.helper cache
+# Mirror this to your private repo.
+cd project1-intro  # this is the directory created from `clone`
+git push https://github.gatech.edu/<gtid>/project1-intro.git
+# You can now delete the clone directory if you wish.
+
+# Now clone your private repo to your home directory.
+git clone https://<gtid>@github.gatech.edu/<gtid>/project1-intro.git
+# Update the upstream for your repo.
+cd project0-intro
+git remote add upstream https://<gtid>@github.gatech.edu/cs72100-omscs/project1-intro.git
+# double check
+git remote -v
+# Now you can use it.
+git pull upstream master # pull updates from the original repo
+git push origin master(branch) # push commits to your repo
