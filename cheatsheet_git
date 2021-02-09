@@ -36,6 +36,13 @@ git remote show origin
 git checkout <target>
 git merge <source>
 
+## git remove a local branch
+git delete -d branchName
+git push origin --delete branchName
+
+## update the local list of remote branches
+git remote update origin --prune
+
 ## undo a file-add
 git reset <file>
 
